@@ -5,80 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>よみとき — コードを、言葉で。</title>
 <style>
-  :root {
-    --ink: #1b2733; --ink-soft: #5a6b7a; --paper: #fbfaf7; --panel: #ffffff;
-    --edge: #e6e2d8; --code-bg: #f4f2ec; --accent: #2f7d6b; --accent-2: #c8823a;
-    --accent-soft: #e4f0ec; --chunk-a: rgba(47,125,107,.055); --chunk-b: rgba(200,130,58,.055);
-    --word: rgba(47,125,107,.16); --word-hot: rgba(47,125,107,.34);
-    --tip-bg: #21313d; --tip-ink: #f3f1ea; --tip-key: #7fd8bf; --shadow: rgba(40,50,45,.10);
+  :root{
+    --ink:#1b2733;--ink-soft:#5a6b7a;--paper:#fbfaf7;--panel:#fff;--edge:#e6e2d8;
+    --code-bg:#f4f2ec;--accent:#2f7d6b;--accent-2:#c8823a;--accent-soft:#e4f0ec;
+    --chunk-a:rgba(47,125,107,.055);--chunk-b:rgba(200,130,58,.055);
+    --word:rgba(47,125,107,.16);--word-hot:rgba(47,125,107,.34);
+    --tip-bg:#21313d;--tip-ink:#f3f1ea;--tip-key:#7fd8bf;--shadow:rgba(40,50,45,.1);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: "Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
-    background: var(--paper); color: var(--ink); line-height: 1.7; -webkit-font-smoothing: antialiased; }
-  code, .code-line, textarea.code { font-family: "SF Mono","JetBrains Mono","Consolas",monospace; }
-  header { padding: 22px 30px 16px; border-bottom: 1px solid var(--edge);
-    display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-  .logo { font-size: 25px; font-weight: 800; letter-spacing: -0.02em; }
-  .logo .dot { color: var(--accent); }
-  .tag { font-size: 14px; color: var(--ink-soft); }
-  .stage { max-width: 1400px; margin: 0 auto; padding: 20px 26px 90px; }
-  .intro { font-size: 14px; color: var(--ink-soft); margin-bottom: 16px; max-width: 760px; }
-  .intro b { color: var(--ink); }
-  .bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-  .seg { display: inline-flex; background: var(--code-bg); border-radius: 9px; padding: 3px; gap: 2px; }
-  .seg button { border: 0; background: transparent; font: inherit; font-size: 13px; padding: 6px 16px;
-    border-radius: 7px; cursor: pointer; color: var(--ink-soft); transition: background .15s,color .15s; }
-  .seg button.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); font-weight: 600; }
-  .bar .sub { font-size: 12.5px; color: var(--ink-soft); }
-  .legend { margin-left: auto; display: flex; gap: 16px; font-size: 12px; color: var(--ink-soft); }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
-  .legend .i-chunk { background: var(--chunk-a); border:1px solid var(--edge);}
-  .legend .i-word { background: var(--word); }
-  textarea.code { width: 100%; min-height: 54vh; border: 1px solid var(--edge); border-radius: 12px;
-    background: var(--code-bg); padding: 16px 18px; font-size: 13.5px; line-height: 1.75;
-    color: var(--ink); resize: vertical; tab-size: 2; }
-  textarea.code:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
-  .go { margin-top: 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .btn { border: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 600; font-size: 14px;
-    padding: 10px 22px; border-radius: 9px; cursor: pointer; transition: transform .1s,opacity .15s; }
-  .btn:hover { opacity: .92; } .btn:active { transform: translateY(1px); } .btn[disabled]{opacity:.5;cursor:default;}
-  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--edge); }
-  .hint-inline { font-size: 12.5px; color: var(--ink-soft); }
-  .overview { background:#eef5f2; border:1px solid var(--edge); border-left:3px solid var(--accent); border-radius:12px; padding:14px 16px; margin-bottom:12px; font-size:14px; line-height:1.62; display:none; }
-  .overview.show { display:block; }
-  .overview .ol { font-size:11px; color:var(--accent); font-weight:700; margin-bottom:4px; }
-  .reader { border: 1px solid var(--edge); border-radius: 12px; background: var(--code-bg);
-    padding: 6px 0; min-height: 56vh; position: relative; }
-  .chunk { border-left: 3px solid transparent; transition: background .12s, border-color .12s; padding: 3px 0; }
-  .chunk[data-band="0"] { background: var(--chunk-a); } .chunk[data-band="1"] { background: var(--chunk-b); }
-  .chunk.hot { border-left-color: var(--accent); }
-  .chunk .chunk-label { font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
-    font-size: 11.5px; color: var(--ink-soft); padding: 0 18px; opacity: 0; height: 0; overflow: hidden; transition: opacity .12s; }
-  .chunk.hot .chunk-label { opacity: .85; height: auto; padding-top: 3px; padding-bottom: 4px; }
-  .code-line { display: flex; align-items: flex-start; gap: 14px; padding: 0 18px; font-size: 13.5px; line-height: 2.0; }
-  .ln { color: #b3ac97; min-width: 26px; text-align: right; user-select: none; font-size: 12px; padding-top: 3px; }
-  .lc { flex: 1; white-space: pre-wrap; word-break: break-word; }
-  .tok { border-radius: 4px; padding: 0 1px; cursor: pointer; transition: background .1s; }
-  .tok.key { background: var(--word); } .tok.key:hover, .tok.hot { background: var(--word-hot); }
-  .lc .rest { cursor: pointer; }
-  .lc .rest:hover { text-decoration: underline dotted rgba(47,125,107,.45); text-underline-offset: 3px; }
-  .tip { position: fixed; z-index: 60; max-width: 400px; background: var(--tip-bg); color: var(--tip-ink);
-    padding: 12px 15px; border-radius: 11px; font-size: 13.5px; line-height: 1.64; box-shadow: 0 8px 26px rgba(20,30,25,.28);
-    font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
-    opacity: 0; transform: translateY(4px); pointer-events: none; transition: opacity .13s, transform .13s; }
-  .tip.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
-  .tip .kind { font-size: 11px; color: var(--tip-key); font-weight: 700; margin-bottom: 4px; }
-  .tip .tail { position: absolute; bottom: -6px; left: 24px; width: 12px; height: 12px; background: var(--tip-bg); transform: rotate(45deg); border-radius: 2px; }
-  .load { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,.25);
-    border-top-color: var(--tip-key); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .status { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-soft); padding: 40px 20px; justify-content: center; }
-  .note { font-size: 12px; color: var(--ink-soft); margin-top: 12px; padding-left: 2px; }
-  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
-    background: var(--tip-bg); color: var(--tip-ink); padding: 12px 20px; border-radius: 10px; font-size: 13.5px;
-    box-shadow: 0 8px 26px rgba(20,30,25,.3); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: 90%; text-align: center; }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+  code,.code-line,textarea.code{font-family:"SF Mono","JetBrains Mono","Consolas",monospace}
+  header{padding:22px 30px 16px;border-bottom:1px solid var(--edge);display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  .logo{font-size:25px;font-weight:800;letter-spacing:-.02em}.logo .dot{color:var(--accent)}
+  .tag{font-size:14px;color:var(--ink-soft)}
+  .stage{max-width:1400px;margin:0 auto;padding:20px 26px 90px}
+  .intro{font-size:14px;color:var(--ink-soft);margin-bottom:16px;max-width:760px}.intro b{color:var(--ink)}
+  .bar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+  .seg{display:inline-flex;background:var(--code-bg);border-radius:0;padding:3px;gap:2px}
+  .seg button{border:0;background:transparent;font:inherit;font-size:13px;padding:6px 16px;border-radius:0;cursor:pointer;color:var(--ink-soft);transition:background .15s,color .15s}
+  .seg button.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px var(--shadow);font-weight:600}
+  .bar .sub{font-size:12.5px;color:var(--ink-soft)}
+  .legend{margin-left:auto;display:flex;gap:16px;font-size:12px;color:var(--ink-soft)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:11px;height:11px;border-radius:0;display:inline-block}
+  .legend .i-chunk{background:var(--chunk-a);border:1px solid var(--edge)}.legend .i-word{background:var(--word)}
+  textarea.code{width:100%;min-height:54vh;border:1px solid var(--edge);border-radius:0;background:var(--code-bg);padding:16px 18px;font-size:13.5px;line-height:1.75;color:var(--ink);resize:vertical;tab-size:2}
+  textarea.code:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  .go{margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .btn{border:0;background:var(--accent);color:#fff;font:inherit;font-weight:600;font-size:14px;padding:10px 22px;border-radius:0;cursor:pointer;transition:transform .1s,opacity .15s}
+  .btn:hover{opacity:.92}.btn:active{transform:translateY(1px)}.btn[disabled]{opacity:.5;cursor:default}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--edge)}
+  .hint-inline{font-size:12.5px;color:var(--ink-soft)}
+  .overview{background:#eef5f2;border:1px solid var(--edge);border-left:3px solid var(--accent);border-radius:0;padding:14px 16px;margin-bottom:12px;font-size:14px;line-height:1.62;display:none}
+  .overview.show{display:block}
+  .overview .ol{font-size:11px;color:var(--accent);font-weight:700;margin-bottom:5px}
+  .overview .guess{font-weight:700;color:var(--ink)}
+  .overview .action{color:var(--ink-soft);margin-top:2px}
+  .reader{border:1px solid var(--edge);border-radius:0;background:var(--code-bg);padding:6px 0;min-height:52vh;position:relative}
+  /* まとまり：背景色や縦線は使わず、開始行の番号に緑の丸＋まとまり間に端を余らせた短い点線 */
+  .chunk{padding:5px 0}
+  .chunk + .chunk{position:relative}
+  .chunk + .chunk::before{content:"";position:absolute;left:48px;right:26px;top:0;border-top:1px dotted rgba(47,125,107,.5)}
+  .chunk.hot{background:rgba(47,125,107,.045)}
+  .chunk .chunk-label{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;font-size:11.5px;color:var(--ink-soft);padding:0 18px 0 42px;opacity:0;height:0;overflow:hidden;transition:opacity .12s}
+  .chunk.hot .chunk-label{opacity:.85;height:auto;padding-top:3px;padding-bottom:4px}
+  .code-line{display:flex;align-items:flex-start;gap:14px;padding:0 18px;font-size:13.5px;line-height:2.0}
+  .ln{color:#b3ac97;min-width:28px;text-align:right;user-select:none;font-size:12px;padding-top:3px;position:relative}
+  .code-line.chunk-start .ln::before{content:"";position:absolute;left:-3px;top:9px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+  .lc{flex:1;white-space:pre-wrap;word-break:break-word}
+  .tok{border-radius:0;padding:0 1px;cursor:pointer;transition:background .1s}.tok.key{background:var(--word)}.tok.key:hover,.tok.hot{background:var(--word-hot)}
+  .lc .rest{cursor:pointer}.lc .rest:hover{text-decoration:underline dotted rgba(47,125,107,.45);text-underline-offset:3px}
+  .tip{position:fixed;z-index:60;max-width:400px;background:var(--tip-bg);color:var(--tip-ink);padding:12px 15px;border-radius:0;font-size:13.5px;line-height:1.64;box-shadow:0 8px 26px rgba(20,30,25,.28);font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif;opacity:0;transform:translateY(4px);pointer-events:none;transition:opacity .13s,transform .13s}
+  .tip.show{opacity:1;transform:translateY(0);pointer-events:auto}
+  .tip .kind{font-size:11px;color:var(--tip-key);font-weight:700;margin-bottom:4px}
+  .tip .tail{position:absolute;bottom:-6px;left:24px;width:12px;height:12px;background:var(--tip-bg);transform:rotate(45deg);border-radius:0}
+  .load{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.25);border-top-color:var(--tip-key);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .status{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-soft);padding:40px 20px;justify-content:center}
+  .note{font-size:12px;color:var(--ink-soft);margin-top:12px;padding-left:2px}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--tip-bg);color:var(--tip-ink);padding:12px 20px;border-radius:0;font-size:13.5px;box-shadow:0 8px 26px rgba(20,30,25,.3);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -90,8 +75,7 @@
 <div class="stage">
   <p class="intro">
     <b>AIが書いたコード、意味わかって使ってますか？</b> よみときは、コードを<b>専門用語を使わずに</b>読み解きます。
-    「まとまり」にカーソルを乗せると全体の意味、色つきの<b>単語</b>を押すとその言葉ひとつの意味が出ます。
-    自分のコードを貼っても試せます（お試しは1日あたり数回まで）。
+    一番上に「何を作ろうとしているか」、まとまり・行・単語ごとに「実行すると何が起きるか」が出ます。自分のコードを貼っても試せます（お試しは1日あたり数回まで）。
   </p>
   <div class="bar">
     <div class="seg" id="seg">
@@ -109,11 +93,11 @@
     <div class="go">
       <button class="btn" id="readBtn">よみとく →</button>
       <button class="btn ghost" id="sampleBtn">サンプルを入れる</button>
-      <span class="hint-inline">貼って押すだけ。意味のまとまりごとに読み解きます。</span>
+      <span class="hint-inline">貼って押すと、全体をまとめて読み解きます。</span>
     </div>
   </div>
   <div id="readPane" style="display:none;">
-    <div class="overview" id="overview"><div class="ol">このコード全体</div><div id="overviewBody"></div></div>
+    <div class="overview" id="overview"><div class="ol">このコード全体</div><div class="guess" id="ovGuess"></div><div class="action" id="ovAction"></div></div>
     <div class="reader" id="reader"></div>
     <div class="note">
       <b>まとまり</b>にカーソルを乗せる → かたまり全体の意味。／
@@ -127,13 +111,12 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const SAMPLE = `const generate = async () => {
+const SAMPLE=`const generate = async () => {
   if (!transcript.trim()) return;
   setLoading(true);
   try {
     const res = await fetch('https://api.example.com/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: transcript })
     });
     const data = await res.json();
@@ -144,138 +127,110 @@ const SAMPLE = `const generate = async () => {
   setLoading(false);
 };`;
 
-const KEYWORDS = ['const','let','var','async','await','function','return','if','else','for','while',
-  'try','catch','finally','=>','fetch','then','new','class','import','export','null','true','false','JSON','map','filter','push','typeof','throw'];
+const KEYWORDS=['const','let','var','async','await','function','return','if','else','for','while','try','catch','finally','=>','fetch','then','new','class','import','export','null','true','false','JSON','map','filter','push','typeof','throw','console'];
 
-let lines = [], chunks = [], mode = 'edit', tipTimer = null, token = 0;
-const lineCache = {}, wordCache = {};
-const $ = id => document.getElementById(id);
-$('codeInput').value = SAMPLE;
+let lines=[],chunks=[],mode='edit',tipTimer=null,token=0;
+// 先読みキャッシュ：full呼び出しで一括で埋まる
+let lineCache={},wordCache={};
+const $=id=>document.getElementById(id);
+$('codeInput').value=SAMPLE;
 
-$('sampleBtn').addEventListener('click', () => { $('codeInput').value = SAMPLE; });
-$('seg').addEventListener('click', e => { const b=e.target.closest('button'); if(b) setMode(b.dataset.mode); });
+$('sampleBtn').addEventListener('click',()=>{$('codeInput').value=SAMPLE;});
+$('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setMode(b.dataset.mode);});
 function setMode(m){
   mode=m;
-  [...$('seg').children].forEach(b=>b.classList.toggle('on', b.dataset.mode===m));
+  [...$('seg').children].forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
   $('editPane').style.display=m==='edit'?'':'none';
   $('readPane').style.display=m==='read'?'':'none';
   $('legend').style.display=m==='read'?'flex':'none';
-  if(m==='edit') hideTip();
+  $('sub').textContent=m==='edit'?'コードを貼りつける':'まとまりに乗せる／単語や行を押す';
+  if(m==='edit')hideTip();
 }
 
-$('readBtn').addEventListener('click', run);
+$('readBtn').addEventListener('click',run);
 async function run(){
-  const src = $('codeInput').value.replace(/\t/g,'  ');
-  if(!src.trim()){ $('codeInput').focus(); return; }
-  lines = src.replace(/\s+$/,'').split('\n');
-  Object.keys(lineCache).forEach(k=>delete lineCache[k]);
-  Object.keys(wordCache).forEach(k=>delete wordCache[k]);
+  const src=$('codeInput').value.replace(/\t/g,'  ');
+  if(!src.trim()){$('codeInput').focus();return;}
+  lines=src.replace(/\s+$/,'').split('\n');
+  lineCache={};wordCache={};
   setMode('read');
   $('overview').classList.remove('show');
-  $('reader').innerHTML='<div class="status"><span class="load"></span> コード全体とまとまりを読み解いています…</div>';
+  $('reader').innerHTML='<div class="status"><span class="load"></span> コード全体をまとめて読み解いています…</div>';
   $('readBtn').disabled=true;
-  const result = await getChunks(lines.join('\n'));
-  chunks = result.chunks;
+
+  const full=await getFull(lines.join('\n'));
   $('readBtn').disabled=false;
-  if(result.overview){ $('overviewBody').textContent=result.overview; $('overview').classList.add('show'); }
+
+  // 先読み結果をキャッシュに展開
+  chunks=full.chunks&&full.chunks.length?full.chunks:[{start:1,end:lines.length,summary:'（まとまりを表示できませんでした）'}];
+  if(full.lines) for(const k in full.lines) lineCache[+k-1]=full.lines[k];
+  if(full.words) for(const w in full.words) wordCache[w]=full.words[w];
+
+  if(full.overview&&(full.overview.guess||full.overview.action)){
+    $('ovGuess').textContent=full.overview.guess||'';
+    $('ovAction').textContent=full.overview.action||'';
+    $('overview').classList.add('show');
+  }
   renderChunks();
 }
-function numbered(code){ return code.split('\n').map((l,i)=>`${i+1}: ${l}`).join('\n'); }
+function numbered(code){return code.split('\n').map((l,i)=>`${i+1}: ${l}`).join('\n');}
 
-async function api(kind, prompt){
-  const r = await fetch('/api/explain', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ kind, prompt })
-  });
-  if(r.status===429){ const j=await r.json(); toast(j.error||'本日の上限に達しました'); return null; }
-  if(!r.ok){ toast('うまく読み解けませんでした。少し待って試してください。'); return null; }
-  const j = await r.json();
-  return j.text || '';
+async function apiCall(kind,prompt){
+  const r=await fetch('/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,prompt})});
+  if(r.status===429){const j=await r.json();toast(j.error||'本日の上限に達しました');return null;}
+  if(!r.ok){toast('うまく読み解けませんでした。少し待って試してください。');return null;}
+  const j=await r.json();return j.text||'';
 }
-
-async function getChunks(code){
-  const out = await api('chunk', `次のコードを読み解いてください。まずコード全体の総括(overview)を書き、次に意味のまとまりに区切って説明してください。\n\n${numbered(code)}`);
-  if(out===null) return {overview:'',chunks:[{start:1,end:lines.length,summary:'（読み解きを表示できませんでした）'}]};
-  try { const o=JSON.parse(out.replace(/```json|```/g,'').trim()); if(o.chunks&&o.chunks.length) return {overview:o.overview||'',chunks:o.chunks}; } catch(e){}
-  return {overview:'',chunks:[{start:1,end:lines.length,summary: out || 'このコード全体のまとまりです。'}]};
+async function getFull(code){
+  const out=await apiCall('full',`次のコードを読み解いてください。総括・まとまり・各行・主要な単語の説明を、指定のJSONでまとめて返してください。\n\n${numbered(code)}`);
+  if(out===null)return {chunks:[{start:1,end:lines.length,summary:'（読み解きを表示できませんでした）'}]};
+  try{return JSON.parse(out.replace(/```json|```/g,'').trim());}catch(e){}
+  return {chunks:[{start:1,end:lines.length,summary:out||'このコード全体のまとまりです。'}]};
 }
 function escapeHtml(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function renderLine(idx){
-  const raw=lines[idx];
-  if(!raw.trim()) return `<span class="rest" data-line="${idx}"> </span>`;
+  const raw=lines[idx];if(!raw.trim())return `<span class="rest" data-line="${idx}"> </span>`;
   const parts=raw.split(/(\b\w+\b|=>|===|&&|\|\||[^\w\s])/g).filter(p=>p!=='');
-  let html='';
-  for(const p of parts){
-    if(KEYWORDS.includes(p)) html+=`<span class="tok key" data-word="${escapeHtml(p)}" data-line="${idx}">${escapeHtml(p)}</span>`;
-    else html+=`<span class="rest" data-line="${idx}">${escapeHtml(p)}</span>`;
-  }
-  return html;
+  let h='';for(const p of parts){if(KEYWORDS.includes(p))h+=`<span class="tok key" data-word="${escapeHtml(p)}" data-line="${idx}">${escapeHtml(p)}</span>`;else h+=`<span class="rest" data-line="${idx}">${escapeHtml(p)}</span>`;}
+  return h;
 }
 function renderChunks(){
-  const r=$('reader'); r.innerHTML='';
+  const r=$('reader');r.innerHTML='';
   chunks.forEach((c,ci)=>{
-    const wrap=document.createElement('div');
-    wrap.className='chunk'; wrap.dataset.band=ci%2; wrap.dataset.ci=ci;
-    const label=document.createElement('div');
-    label.className='chunk-label'; label.textContent='このまとまり：'+c.summary;
-    wrap.appendChild(label);
-    for(let i=c.start;i<=c.end&&i<=lines.length;i++){
-      const idx=i-1;
-      const d=document.createElement('div'); d.className='code-line';
-      d.innerHTML=`<span class="ln">${i}</span><span class="lc">${renderLine(idx)}</span>`;
-      wrap.appendChild(d);
-    }
-    wrap.addEventListener('mouseenter',()=>showChunk(ci,wrap));
-    wrap.addEventListener('mouseleave',scheduleHide);
+    const wrap=document.createElement('div');wrap.className='chunk';wrap.dataset.band=ci%2;wrap.dataset.ci=ci;
+    const label=document.createElement('div');label.className='chunk-label';label.textContent='このまとまり：'+c.summary;wrap.appendChild(label);
+    for(let i=c.start;i<=c.end&&i<=lines.length;i++){const idx=i-1;const d=document.createElement('div');d.className='code-line'+(i===c.start?' chunk-start':'');d.innerHTML=`<span class="ln">${i}</span><span class="lc">${renderLine(idx)}</span>`;wrap.appendChild(d);}
+    wrap.addEventListener('mouseenter',()=>showChunk(ci,wrap));wrap.addEventListener('mouseleave',scheduleHide);
     r.appendChild(wrap);
   });
-  r.onclick=(e)=>{
-    const tok=e.target.closest('.tok.key');
-    if(tok){ e.stopPropagation(); explainWord(tok); return; }
-    const rest=e.target.closest('.rest');
-    if(rest){ e.stopPropagation(); explainLine(+rest.dataset.line, rest); }
-  };
+  r.onclick=e=>{const t=e.target.closest('.tok.key');if(t){e.stopPropagation();explainWord(t);return;}const rest=e.target.closest('.rest');if(rest){e.stopPropagation();explainLine(+rest.dataset.line,rest);}};
 }
-function showChunk(ci,el){
-  clearTimeout(tipTimer);
-  [...document.querySelectorAll('.chunk')].forEach(c=>c.classList.toggle('hot',+c.dataset.ci===ci));
-  posTip(el.getBoundingClientRect());
-  renderTip('このまとまり', chunks[ci].summary);
-}
+function showChunk(ci,el){clearTimeout(tipTimer);[...document.querySelectorAll('.chunk')].forEach(c=>c.classList.toggle('hot',+c.dataset.ci===ci));pos(el.getBoundingClientRect());renderTip('このまとまり',chunks[ci].summary);}
 async function explainLine(idx,el){
-  clearTimeout(tipTimer);
-  posTip(el.getBoundingClientRect());
-  if(!lines[idx]||!lines[idx].trim()){ renderTip('この行','この行は空です。読みやすくするための余白で、何もしません。'); return; }
-  if(lineCache[idx]){ renderTip('この行', lineCache[idx]); return; }
-  const t=++token;
-  renderTip('この行','<span class="load"></span> よみといています…');
-  const out = await api('line', `次のコード全体を文脈として、指定の1行だけを説明。\n\n【全体】\n${lines.join('\n')}\n\n【この行】\n${lines[idx]}`);
-  if(t!==token||out===null) return; lineCache[idx]=out; renderTip('この行', out);
+  clearTimeout(tipTimer);pos(el.getBoundingClientRect());
+  if(!lines[idx]||!lines[idx].trim()){renderTip('この行','この行は空です。読みやすくするための余白で、何もしません。');return;}
+  if(lineCache[idx]){renderTip('この行',lineCache[idx]);return;}
+  const t=++token;renderTip('この行','<span class="load"></span> よみといています…');
+  const out=await apiCall('line',`次のコード全体を文脈として、指定の1行だけを説明。\n\n【全体】\n${lines.join('\n')}\n\n【この行】\n${lines[idx]}`);
+  if(t!==token||out===null)return;lineCache[idx]=out;renderTip('この行',out);
 }
 async function explainWord(el){
-  clearTimeout(tipTimer);
-  const word=el.dataset.word, idx=+el.dataset.line;
-  [...document.querySelectorAll('.tok')].forEach(x=>x.classList.remove('hot'));
-  el.classList.add('hot');
-  posTip(el.getBoundingClientRect());
-  if(wordCache[word]){ renderTip('この言葉：'+word, wordCache[word]); return; }
-  const t=++token;
-  renderTip('この言葉：'+word,'<span class="load"></span> よみといています…');
-  const out = await api('word', `この行の中の「${word}」という言葉ひとつの意味だけを、初心者に説明してください。\n\n【行】\n${lines[idx]}`);
-  if(t!==token||out===null) return; wordCache[word]=out; renderTip('この言葉：'+word, out);
+  clearTimeout(tipTimer);const word=el.dataset.word,idx=+el.dataset.line;
+  [...document.querySelectorAll('.tok')].forEach(x=>x.classList.remove('hot'));el.classList.add('hot');
+  pos(el.getBoundingClientRect());
+  if(wordCache[word]){renderTip('この言葉：'+word,wordCache[word]);return;}
+  const t=++token;renderTip('この言葉：'+word,'<span class="load"></span> よみといています…');
+  const out=await apiCall('word',`この行の中の「${word}」という言葉ひとつの意味だけを、初心者に説明してください。\n\n【行】\n${lines[idx]}`);
+  if(t!==token||out===null)return;wordCache[word]=out;renderTip('この言葉：'+word,out);
 }
-function posTip(rect){
-  const tip=$('tip');
-  tip.style.left=Math.min(Math.max(12,rect.left),window.innerWidth-420)+'px';
-  tip.style.top=(rect.top-12)+'px'; tip.style.transform='translateY(-100%)';
-}
-function renderTip(kind,html){ const tip=$('tip'); $('tipKind').textContent=kind; $('tipInner').innerHTML=html; tip.classList.add('show'); }
-function scheduleHide(){ tipTimer=setTimeout(hideTip,160); }
-function hideTip(){ $('tip').classList.remove('show'); [...document.querySelectorAll('.chunk')].forEach(c=>c.classList.remove('hot')); [...document.querySelectorAll('.tok')].forEach(x=>x.classList.remove('hot')); }
+function pos(rect){const tip=$('tip');tip.style.left=Math.min(Math.max(12,rect.left),window.innerWidth-420)+'px';tip.style.top=(rect.top-12)+'px';tip.style.transform='translateY(-100%)';}
+function renderTip(kind,html){const tip=$('tip');$('tipKind').textContent=kind;$('tipInner').innerHTML=html;tip.classList.add('show');}
+function scheduleHide(){tipTimer=setTimeout(hideTip,160);}
+function hideTip(){$('tip').classList.remove('show');[...document.querySelectorAll('.chunk')].forEach(c=>c.classList.remove('hot'));[...document.querySelectorAll('.tok')].forEach(x=>x.classList.remove('hot'));}
 $('tip').addEventListener('mouseenter',()=>clearTimeout(tipTimer));
 $('tip').addEventListener('mouseleave',hideTip);
 let toastTimer=null;
-function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),4200); }
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4200);}
 </script>
 </body>
 </html>
