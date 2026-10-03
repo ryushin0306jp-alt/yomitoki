@@ -94,7 +94,7 @@
     </div>
   </div>
   <div id="editPane">
-    <textarea class="code" id="codeInput" spellcheck="false"></textarea>
+    <textarea class="code" id="codeInput" spellcheck="false" placeholder="ここにコードを貼りつけてください。&#10;（「サンプルを入れる」を押すと、お試し用のコードが入ります）"></textarea>
     <div class="go">
       <button class="btn" id="readBtn">よみとく →</button>
       <button class="btn ghost" id="sampleBtn">サンプルを入れる</button>
@@ -146,7 +146,6 @@ let lines=[],chunks=[],mode='edit',tipTimer=null,token=0;
 // 先読みキャッシュ：full呼び出しで一括で埋まる
 let lineCache={},wordCache={};
 const $=id=>document.getElementById(id);
-$('codeInput').value=SAMPLE;
 
 $('sampleBtn').addEventListener('click',()=>{$('codeInput').value=SAMPLE;});
 $('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setMode(b.dataset.mode);});
