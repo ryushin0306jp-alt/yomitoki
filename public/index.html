@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>よみとき — コードを、言葉で。</title>
+<title>ヨミトキコード</title>
 <style>
   :root{
     --ink:#1b2733;--ink-soft:#5a6b7a;--paper:#fbfaf7;--panel:#fff;--edge:#e6e2d8;
@@ -35,6 +35,7 @@
   .btn:hover{opacity:.92}.btn:active{transform:translateY(1px)}.btn[disabled]{opacity:.5;cursor:default}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--edge)}
   .hint-inline{font-size:12.5px;color:var(--ink-soft)}
+  .privacy{font-size:11.5px;color:var(--ink-soft);margin-top:10px;padding:7px 10px;background:rgba(200,130,58,.07);border-left:2px solid var(--accent-2)}
   .overview{background:#eef5f2;border:1px solid var(--edge);border-left:3px solid var(--accent);border-radius:0;padding:14px 16px;margin-bottom:12px;font-size:14px;line-height:1.62;display:none}
   .overview.show{display:block}
   .overview .ol{font-size:11px;color:var(--accent);font-weight:700;margin-bottom:5px}
@@ -62,21 +63,25 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .status{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-soft);padding:40px 20px;justify-content:center}
   .note{font-size:12px;color:var(--ink-soft);margin-top:12px;padding-left:2px}
+  .feedback{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .fb-q{font-size:13px;color:var(--ink-soft)}
+  .fb-disclaimer{font-size:12px;color:var(--ink-soft);margin-top:18px;line-height:1.5}
+  .fb-btn{border:1px solid var(--edge);background:var(--panel);font-size:18px;line-height:1;padding:6px 12px;border-radius:0;cursor:pointer;transition:background .12s,transform .1s}
+  .fb-btn:hover{background:var(--accent-soft)}
+  .fb-btn:active{transform:translateY(1px)}
+  .fb-btn.chosen{background:var(--accent-soft);border-color:var(--accent)}
+  .fb-thanks{font-size:12.5px;color:var(--accent);opacity:0;transition:opacity .2s}
+  .fb-thanks.show{opacity:1}
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--tip-bg);color:var(--tip-ink);padding:12px 20px;border-radius:0;font-size:13.5px;box-shadow:0 8px 26px rgba(20,30,25,.3);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90%;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">よみとき<span class="dot">.</span></div>
-  <div class="tag">コードに、そっと言葉を。</div>
+  <div class="logo">ヨミトキコード<span class="dot">.</span></div>
 </header>
 
 <div class="stage">
-  <p class="intro">
-    <b>AIが書いたコード、意味わかって使ってますか？</b> よみときは、コードを<b>専門用語を使わずに</b>読み解きます。
-    一番上に「何を作ろうとしているか」、まとまり・行・単語ごとに「実行すると何が起きるか」が出ます。自分のコードを貼っても試せます（お試しは1日あたり数回まで）。
-  </p>
   <div class="bar">
     <div class="seg" id="seg">
       <button class="on" data-mode="edit">編集</button>
@@ -95,6 +100,7 @@
       <button class="btn ghost" id="sampleBtn">サンプルを入れる</button>
       <span class="hint-inline">貼って押すと、全体をまとめて読み解きます。</span>
     </div>
+    <p class="privacy">貼り付けた内容は、説明のため外部のAIに送信されます。パスワードやAPIキーなどは含めないでください。</p>
   </div>
   <div id="readPane" style="display:none;">
     <div class="overview" id="overview"><div class="ol">このコード全体</div><div class="guess" id="ovGuess"></div><div class="action" id="ovAction"></div></div>
@@ -103,6 +109,13 @@
       <b>まとまり</b>にカーソルを乗せる → かたまり全体の意味。／
       <b>色つきの単語</b>を押す → その言葉ひとつの意味。／
       <b>行のそれ以外</b>を押す → その行の意味。
+    </div>
+    <p class="fb-disclaimer">この説明はAIが作っています。おかしな点や間違いに気づいたら、下のボタンで教えてください。</p>
+    <div class="feedback" id="feedback">
+      <span class="fb-q">この説明は正しく、分かりやすかったですか？</span>
+      <button class="fb-btn" id="fbUp" aria-label="はい">&#128077;</button>
+      <button class="fb-btn" id="fbDown" aria-label="いいえ">&#128078;</button>
+      <span class="fb-thanks" id="fbThanks">ありがとうございます！</span>
     </div>
   </div>
 </div>
@@ -155,6 +168,7 @@ async function run(){
   lineCache={};wordCache={};
   setMode('read');
   $('overview').classList.remove('show');
+  if(typeof resetVote==='function') resetVote();
   $('reader').innerHTML='<div class="status"><span class="load"></span> コード全体をまとめて読み解いています…</div>';
   $('readBtn').disabled=true;
 
@@ -231,6 +245,21 @@ $('tip').addEventListener('mouseenter',()=>clearTimeout(tipTimer));
 $('tip').addEventListener('mouseleave',hideTip);
 let toastTimer=null;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4200);}
+
+// 評価ボタン（道2：今はこのブラウザ内だけ。集計DBは人が来る段階で接続する）
+let voted=false;
+function vote(kind,btn){
+  if(voted)return;
+  voted=true;
+  btn.classList.add('chosen');
+  $('fbUp').disabled=true;$('fbDown').disabled=true;
+  $('fbThanks').classList.add('show');
+  // TODO: ここで将来 /api にPOSTして集計を保存する
+}
+$('fbUp').addEventListener('click',()=>vote('up',$('fbUp')));
+$('fbDown').addEventListener('click',()=>vote('down',$('fbDown')));
+// 新しいコードを読み解くたびに、また評価できるようにリセット
+function resetVote(){voted=false;$('fbUp').classList.remove('chosen');$('fbDown').classList.remove('chosen');$('fbUp').disabled=false;$('fbDown').disabled=false;$('fbThanks').classList.remove('show');}
 </script>
 </body>
 </html>
