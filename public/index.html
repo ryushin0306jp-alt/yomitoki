@@ -275,41 +275,44 @@ let toastTimer=null;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4200);}
 
 // 評価ボタン（道2：今はこのブラウザ内だけ。集計DBは人が来る段階で接続する）
-let voted=false, reasonChosen=false;
-function vote(kind,btn){
-  if(voted)return;
-  voted=true;
-  btn.classList.add('chosen');
-  $('fbUp').disabled=true;$('fbDown').disabled=true;
-  if(kind==='down'){
-    // 👎のときは「どこが気になったか」を聞く（改善ループのための具体化）
-    $('fbReasons').classList.add('show');
-  } else {
-    $('fbThanks').classList.add('show');
-  }
-  // TODO: ここで将来 /api にPOSTして集計（kind）を保存する
+// 同じボタンをもう一度押すと取り消し／違うボタンを押すと切り替え。いつでも変更可。
+let current=null; // null / 'up' / 'down'
+function vote(kind){
+  if(current===kind){ current=null; }        // 同じのをもう一度 → 取り消し
+  else { current=kind; }                       // 違うのを押す → 切り替え
+  $('fbUp').classList.toggle('chosen',current==='up');
+  $('fbDown').classList.toggle('chosen',current==='down');
+  // 👎のときだけ理由を出す。👍や取り消しのときは隠す
+  $('fbReasons').classList.toggle('show',current==='down');
+  // お礼は、何か選ばれている間だけ（👎は理由を選んでからにしたいので👍のときのみ）
+  $('fbThanks').classList.toggle('show',current==='up');
+  if(current!=='down'){ clearReasons(); }      // 👎をやめたら理由選択もリセット
+  // TODO: ここで将来 /api にPOSTして集計（current）を保存する
 }
-$('fbUp').addEventListener('click',()=>vote('up',$('fbUp')));
-$('fbDown').addEventListener('click',()=>vote('down',$('fbDown')));
-// 👎の理由を選んだとき
+$('fbUp').addEventListener('click',()=>vote('up'));
+$('fbDown').addEventListener('click',()=>vote('down'));
+// 👎の理由を選んだとき（理由も押し直しで変更可）
+let reasonChosen=null;
 document.querySelectorAll('.fb-reason').forEach(b=>{
   b.addEventListener('click',()=>{
-    if(reasonChosen)return;
-    reasonChosen=true;
-    b.classList.add('chosen');
-    document.querySelectorAll('.fb-reason').forEach(x=>{if(x!==b)x.disabled=true;});
-    $('fbThanks').classList.add('show');
-    // TODO: ここで将来 /api に理由（b.dataset.r）を保存する
+    const r=b.dataset.r;
+    reasonChosen = (reasonChosen===r) ? null : r;  // 同じのをもう一度 → 取り消し
+    document.querySelectorAll('.fb-reason').forEach(x=>x.classList.toggle('chosen',x.dataset.r===reasonChosen));
+    $('fbThanks').classList.toggle('show',reasonChosen!==null);
+    // TODO: ここで将来 /api に理由（reasonChosen）を保存する
   });
 });
+function clearReasons(){
+  reasonChosen=null;
+  document.querySelectorAll('.fb-reason').forEach(x=>x.classList.remove('chosen'));
+}
 // 新しいコードを読み解くたびに、また評価できるようにリセット
 function resetVote(){
-  voted=false;reasonChosen=false;
+  current=null;
   $('fbUp').classList.remove('chosen');$('fbDown').classList.remove('chosen');
-  $('fbUp').disabled=false;$('fbDown').disabled=false;
   $('fbThanks').classList.remove('show');
   $('fbReasons').classList.remove('show');
-  document.querySelectorAll('.fb-reason').forEach(x=>{x.classList.remove('chosen');x.disabled=false;});
+  clearReasons();
 }
 </script>
 </body>
