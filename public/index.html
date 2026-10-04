@@ -66,6 +66,12 @@
   .feedback{display:flex;align-items:center;gap:10px;margin-top:8px}
   .fb-q{font-size:13px;color:var(--ink-soft)}
   .fb-disclaimer{font-size:12px;color:var(--ink-soft);margin-top:18px;line-height:1.5}
+  .fb-reasons{display:none;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+  .fb-reasons.show{display:flex}
+  .fb-reasons-q{font-size:12.5px;color:var(--ink-soft)}
+  .fb-reason{border:1px solid var(--edge);background:var(--panel);font:inherit;font-size:12px;padding:5px 11px;border-radius:0;cursor:pointer;color:var(--ink);transition:background .12s}
+  .fb-reason:hover{background:var(--accent-soft)}
+  .fb-reason.chosen{background:var(--accent-soft);border-color:var(--accent)}
   .fb-btn{border:1px solid var(--edge);background:var(--panel);font-size:18px;line-height:1;padding:6px 12px;border-radius:0;cursor:pointer;transition:background .12s,transform .1s}
   .fb-btn:hover{background:var(--accent-soft)}
   .fb-btn:active{transform:translateY(1px)}
@@ -117,6 +123,14 @@
       <button class="fb-btn" id="fbDown" aria-label="いいえ">&#128078;</button>
       <span class="fb-thanks" id="fbThanks">ありがとうございます！</span>
     </div>
+    <div class="fb-reasons" id="fbReasons">
+      <span class="fb-reasons-q">どこが気になりましたか？</span>
+      <button class="fb-reason" data-r="jargon">専門用語が残っていた</button>
+      <button class="fb-reason" data-r="flow">全体の流れが分からない</button>
+      <button class="fb-reason" data-r="verbose">説明が長い・くどい</button>
+      <button class="fb-reason" data-r="wrong">間違っている気がする</button>
+      <button class="fb-reason" data-r="other">その他</button>
+    </div>
   </div>
 </div>
 
@@ -144,7 +158,7 @@ const KEYWORDS=['const','let','var','async','await','function','return','if','el
 
 let lines=[],chunks=[],mode='edit',tipTimer=null,token=0;
 // 先読みキャッシュ：full呼び出しで一括で埋まる
-let lineCache={},wordCache={};
+let lineCache={},wordCache={},fullCache={};
 const $=id=>document.getElementById(id);
 
 $('sampleBtn').addEventListener('click',()=>{$('codeInput').value=SAMPLE;});
@@ -168,10 +182,25 @@ async function run(){
   setMode('read');
   $('overview').classList.remove('show');
   if(typeof resetVote==='function') resetVote();
-  $('reader').innerHTML='<div class="status"><span class="load"></span> コード全体をまとめて読み解いています…</div>';
   $('readBtn').disabled=true;
 
-  const full=await getFull(lines.join('\n'));
+  const codeStr=lines.join('\n');
+  // 段階的な「解析中」表示（API代ゼロ・待ち時間の体感改善）
+  const steps=['コードの構造を読んでいます…','意味のまとまりに分けています…','全体の意味をまとめています…','あと少しで仕上がります…'];
+  let si=0;
+  const setStatus=t=>{$('reader').innerHTML='<div class="status"><span class="load"></span> '+t+'</div>';};
+  setStatus(steps[0]);
+  const stepTimer=setInterval(()=>{si=Math.min(si+1,steps.length-1);setStatus(steps[si]);},3500);
+
+  // キャッシュ：同じコードを前に読み解いていたら、API を呼ばずに即返す
+  let full;
+  if(fullCache[codeStr]){
+    full=fullCache[codeStr];
+  } else {
+    full=await getFull(codeStr);
+    if(full && full.chunks) fullCache[codeStr]=full;
+  }
+  clearInterval(stepTimer);
   $('readBtn').disabled=false;
 
   // 先読み結果をキャッシュに展開
@@ -246,19 +275,42 @@ let toastTimer=null;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4200);}
 
 // 評価ボタン（道2：今はこのブラウザ内だけ。集計DBは人が来る段階で接続する）
-let voted=false;
+let voted=false, reasonChosen=false;
 function vote(kind,btn){
   if(voted)return;
   voted=true;
   btn.classList.add('chosen');
   $('fbUp').disabled=true;$('fbDown').disabled=true;
-  $('fbThanks').classList.add('show');
-  // TODO: ここで将来 /api にPOSTして集計を保存する
+  if(kind==='down'){
+    // 👎のときは「どこが気になったか」を聞く（改善ループのための具体化）
+    $('fbReasons').classList.add('show');
+  } else {
+    $('fbThanks').classList.add('show');
+  }
+  // TODO: ここで将来 /api にPOSTして集計（kind）を保存する
 }
 $('fbUp').addEventListener('click',()=>vote('up',$('fbUp')));
 $('fbDown').addEventListener('click',()=>vote('down',$('fbDown')));
+// 👎の理由を選んだとき
+document.querySelectorAll('.fb-reason').forEach(b=>{
+  b.addEventListener('click',()=>{
+    if(reasonChosen)return;
+    reasonChosen=true;
+    b.classList.add('chosen');
+    document.querySelectorAll('.fb-reason').forEach(x=>{if(x!==b)x.disabled=true;});
+    $('fbThanks').classList.add('show');
+    // TODO: ここで将来 /api に理由（b.dataset.r）を保存する
+  });
+});
 // 新しいコードを読み解くたびに、また評価できるようにリセット
-function resetVote(){voted=false;$('fbUp').classList.remove('chosen');$('fbDown').classList.remove('chosen');$('fbUp').disabled=false;$('fbDown').disabled=false;$('fbThanks').classList.remove('show');}
+function resetVote(){
+  voted=false;reasonChosen=false;
+  $('fbUp').classList.remove('chosen');$('fbDown').classList.remove('chosen');
+  $('fbUp').disabled=false;$('fbDown').disabled=false;
+  $('fbThanks').classList.remove('show');
+  $('fbReasons').classList.remove('show');
+  document.querySelectorAll('.fb-reason').forEach(x=>{x.classList.remove('chosen');x.disabled=false;});
+}
 </script>
 </body>
 </html>
